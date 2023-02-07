@@ -1,0 +1,166 @@
+{
+	"info": {
+		"_postman_id": "3ccdd16a-e832-4106-b382-05607c4490c0",
+		"name": "Hubtel-Wallets-Api-Documentaion",
+		"description": "This is the documentation for the hubtel wallets api . This api was built using the .net core 3.1 framework and uses a volatile in-memory database. It includes endpoints for **Adding, Deleting, Getting one, and Getting all wallets** from the database.\n\n**A wallet model contains the following attributes;**\n\n1.  Id (**string**)\n2.  Name (**string**)\n3.  AccountNumber (**string - phone number | card number**)\n4.  Type (**AccountType - Momo | Card | Invalid** ( When account number is invalid. Wallet wont be created))\n5.  Scheme (**AccountScheme - Visa | Mastercard | MTN | Vodafone | Airteltigo | Unsupported**( When account number is valid but doesnt have a supported scheme. Wallet wont be created) )\n6.  CreatedAt (**Datetime - date of creation**)\n7.  Owner (**string -** **phone number**)\n    \n\n**The business rules enforced are ;**\n\n1.  A wallet cannot be added twice\n2.  A user can add only up to 4 wallets\n3.  For a card number, only first 6 digits are stored",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18127862"
+	},
+	"item": [
+		{
+			"name": "Get the list of all wallets",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/api/wallets",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets"
+					]
+				},
+				"description": "Api get endpoint to fetch all wallets"
+			},
+			"response": []
+		},
+		{
+			"name": "Create new wallet",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"accountNumber\":\"+233552489605\",\r\n    \"name\":\"Eddie\",\r\n    \"ownerPhone\":\"0552489605\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5001/api/wallets",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets"
+					]
+				},
+				"description": "Create a new wallet by supplying **accountNumber, name, ownerPhone** as fields in request body.\n\nThese fields map to **AccountNumber, Name, and Owner** properties of a wallet model\n\n**Validation and Errors**\n\n1.  Required fields are validated using data annotations and return an error if validation fails, else request is made\n2.  If at least one field is omitted, a validation error asking for omitted fields is thrown\n3.  **name** field should be characters within range 3-25 or returns error response\n4.  **ownerPhone** field should be a valid phone number or returns error response\n5.  **accountNumber** field should be a valid phone or card number or returns error response\n    \n\n**Request and Errors**\n\n1.  Account **Type** is evaluated using **AccountNumber** to either **MoMo, Card or Invalid**\n2.  Account **Scheme** is also evaluated using **AccountNumber** to either **Visa, Mastercard, MTN, Vodafone, AirtelTigo or Unsupported**\n3.  An **Invalid** account Type results in a failure and returns an appropriate response\n4.  An **unsupported** scheme results in a failure and returns an appropriate response\n5.  Attempt to add an **existing account number** results in failure and returns an appropriate response\n6.  Attempt to add a **5th wallet** by same owner results in failure and returns an appropriate response\n    \n\n**Test account numbers and expected response**\n\n| **AccountNumber** | **Type** | **Scheme** | **Expected Response** |\n| --- | --- | --- | --- |\n| 4111111111111111 | Card | Visa | 201 created and **Wallet** object |\n| 5555555555554444 | Card | Mastercard | 201 created and **Wallet** object |\n| 378282246310005 | Card | Unsupported | 400 bad request and error response |\n| 1234567890123456 | Invalid | \\- | 400 bad request and error response |\n| 0552489602 | Momo | MTN | 201 created and **Wallet** object |\n| 0231234567 | Momo | Unsupported | 400 bad request and error response |"
+			},
+			"response": []
+		},
+		{
+			"name": "Error : Account already exists",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"accountNumber\":\"+233552489605\",\r\n    \"name\":\"Eddie\",\r\n    \"ownerPhone\":\"0552489605\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5001/api/wallets",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets"
+					]
+				},
+				"description": "Using same account number as previous post request throws an error indicating account already exists."
+			},
+			"response": []
+		},
+		{
+			"name": "Error - Too many wallets. Cant add 5th card",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"accountNumber\":\"+233501651045\",\r\n    \"name\":\"Eddie\",\r\n    \"ownerPhone\":\"0552489605\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://localhost:5001/api/wallets",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets"
+					]
+				},
+				"description": "The owner with the phone has added up to 4 accounts and is denied access to a fifth wallet account"
+			},
+			"response": []
+		},
+		{
+			"name": "Delete wallet with Id",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/api/wallets/e1833b05-4c87-4363-bb51-cdd70c9ce15c",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets",
+						"e1833b05-4c87-4363-bb51-cdd70c9ce15c"
+					]
+				},
+				"description": "Delete wallet with specified id if it exists or throw a not found error"
+			},
+			"response": []
+		},
+		{
+			"name": "Get one wallet with Id",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:5001/api/wallets/0e912b83-6785-47c2-8c19-0e7cd3fc48cb",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"wallets",
+						"0e912b83-6785-47c2-8c19-0e7cd3fc48cb"
+					]
+				},
+				"description": "Get wallet with specified id if it exists or throw a not found error"
+			},
+			"response": []
+		}
+	]
+}
